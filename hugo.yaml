@@ -68,7 +68,7 @@ params:
   ShowPageNums: true # 展示页面的页数
   ShowToc: true # 展示文章详情页的目录
   comments: true # 评论
-  images: ["https://i.postimg.cc/7hwBy7VS/calcr.png"] # 缺省的图片，比如，博客的封面
+  images: favicon.png # 缺省的图片，比如，博客的封面
   DateFormat: "2006-01-02" # 这个时间是作者自己写的，只能这样写
 
   # 首页的文章上方的一些信息
@@ -85,19 +85,14 @@ params:
   socialIcons:
     - name: github
       title: Follow my Github
-      url: "https://github.com/sonnycalcr"
+      url: "https://github.com/henry8019"
     - name: X
       title: Follow my Twitter
-      url: "https://x.com/sonnycalcr"
+      url: "https://x.com/"
     - name: Bilibili
-      title: 关注我的 B 站帐号
+      title: Follow my bilibili
       url: "https://space.bilibili.com/3493138859559908"
-    - name: Youtube
-      title: Follow my Youtube Channel
-      url: "https://youtube.com/@sonnycalcr"
-    - name: Telegram
-      title: Contact Me
-      url: "https://t.me/sonnycalcr"
+
 
   # 搜索
   fuseOpts:
