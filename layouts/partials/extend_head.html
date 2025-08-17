@@ -1,10 +1,337 @@
-{{- /* Head custom content area start */ -}}
-{{- /*     Insert any custom code (web-analytics, resources, etc.) - it will appear in the <head></head> section of every page. */ -}}
-{{- /*     Can be overwritten by partial with the same name in the global layouts. */ -}}
-
+<!-- 引入外部字体 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
 
+<!-- 引入 MathJax -->
 {{ partial "mathjax.html" . }}
-{{- /* Head custom content area end */ -}}
+
+<!-- 引入 Three.js 库 -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+
+<!-- Three.js 背景与主题联动逻辑 -->
+<script>
+// 隔离作用域，避免与原生脚本冲突
+(function() {
+  // 等待整个页面（包括原生主题脚本）加载完成
+  window.addEventListener('DOMContentLoaded', function() {
+    // 确保主题切换按钮已存在
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (!themeToggleBtn) {
+      console.warn('未找到主题切换按钮，但仍会尝试通过类变化监听主题');
+    }
+    // 初始化 Three.js 背景
+    initThreejsBackground();
+  });
+
+  // Three.js 初始化函数
+  function initThreejsBackground() {
+    try {
+          // ===== 新增：检查容器是否已存在，存在则直接返回 =====
+      if (document.getElementById('threejs-container')) {
+        return;
+      }
+      // ==================================================
+
+      // 检查 Three.js 是否加载成功
+      if (typeof THREE === 'undefined') {
+        throw new Error('Three.js 库未正确加载');
+      }
+
+      // 创建 Three.js 容器并添加到页面
+      const container = document.createElement('div');
+      container.id = 'threejs-container';
+      container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none;';
+      document.body.appendChild(container);
+
+      // 场景、相机、渲染器初始化
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      const renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        alpha: true,
+        powerPreference: "high-performance"
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      // 创建粒子系统（主题适配核心元素）
+      const particlesCount = 1500;
+      const particlesGeometry = new THREE.BufferGeometry();
+      const posArray = new Float32Array(particlesCount * 3);
+      // 粒子分布优化：中心密集，边缘稀疏
+      for (let i = 0; i < particlesCount * 3; i++) {
+        const base = (Math.random() - 0.5) * 20; // 基础范围
+        posArray[i] = base * (Math.abs(base) / 10); // 边缘衰减
+      }
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+
+      const textureLoader = new THREE.TextureLoader();
+
+      // 粒子材质（初始颜色根据主题设置）
+      const particlesMaterial = new THREE.PointsMaterial({
+       // 基础大小与衰减
+        size: 0.03, // 稍大一点，提升可见性
+        sizeAttenuation: true, // 远处粒子自动缩小，增强空间感
+        sizeMin: 0.01, // 限制最小尺寸，避免远处粒子消失
+        sizeMax: 0.08, // 限制最大尺寸，防止近处粒子过大
+
+        // 颜色与透明度（支持主题切换）
+        color: 0x007acc, // 浅色模式默认：深蓝色
+        transparent: true,
+        opacity: 0.7, // 降低基础透明度，避免过于刺眼
+      });
+
+      const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+      scene.add(particlesMesh);
+
+      // ---------------- 主题联动核心逻辑 ----------------
+      // 1. 主题更新函数：根据暗黑/浅色模式调整 Three.js 样式
+      function updateThreejsTheme(isDark) {
+        if (isDark) {
+          // 暗黑模式配置（与 PaperMod 暗黑主题匹配）
+          scene.background = new THREE.Color(0x121212); // PaperMod 暗黑背景色
+          particlesMaterial.color.set(0x79c0ff);       // 亮蓝色粒子
+          particlesMaterial.size = 0.03;               // 粒子稍大
+          particlesMaterial.opacity = 0.9;             // 更明显
+        } else {
+          // 浅色模式配置
+          scene.background = new THREE.Color(0xffffff); // 浅色背景色
+          particlesMaterial.color.set(0x007acc);       // 深蓝色粒子
+          particlesMaterial.size = 0.02;               // 粒子默认大小
+          particlesMaterial.opacity = 0.8;             // 稍透明
+        }
+        // 强制材质更新
+        particlesMaterial.needsUpdate = true;
+        scene.background.needsUpdate = true;
+      }
+
+      // 2. 初始主题检测：页面加载时根据当前主题设置样式
+      // PaperMod 在 body 上添加 dark 类，而不是 html
+      const initialIsDark = document.body.classList.contains('dark');
+      updateThreejsTheme(initialIsDark);
+
+      // 3. 监听主题切换按钮点击（与原生按钮直接联动）
+      const themeBtn = document.getElementById('theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+          // 延长延迟到 100ms，确保 PaperMod 完成主题切换
+          setTimeout(() => {
+            const isDarkNow = document.body.classList.contains('dark');
+            updateThreejsTheme(isDarkNow);
+          }, 100);
+        });
+      }
+
+      // 4. 监听 body 元素类变化（PaperMod 在 body 上操作 dark 类）
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          // 当 body 元素的 class 属性变化时触发
+          if (mutation.attributeName === 'class') {
+            const isDarkNow = document.body.classList.contains('dark');
+            updateThreejsTheme(isDarkNow);
+          }
+        });
+      });
+      // 观察 body 元素的 class 变化
+      observer.observe(document.body, { attributes: true });
+
+      // 5. 监听 localStorage 变化，确保与 PaperMod 主题偏好同步
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'pref-theme') {
+          const isDarkNow = e.newValue === 'dark';
+          updateThreejsTheme(isDarkNow);
+        }
+      });
+
+      // ---------------------------------------------------
+
+      // 动画循环：粒子旋转+微小波动
+      function animate() {
+        requestAnimationFrame(animate);
+        // 缓慢旋转增强动态感
+        particlesMesh.rotation.y += 0.0003;
+        particlesMesh.rotation.x += 0.0001;
+        // 粒子微小随机移动，避免僵硬
+        const positions = particlesMesh.geometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+          positions[i + 2] += (Math.random() - 0.5) * 0.001; // Z轴微动
+        }
+        particlesMesh.geometry.attributes.position.needsUpdate = true;
+        // 渲染场景
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // 窗口大小变化时自适应
+      window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+    } catch (error) {
+      console.error('Three.js 初始化失败：', error);
+    }
+  }
+})();
+</script>
+
+
+<!-- ===== 新增：Pjax 逻辑（拦截页面切换，保持 Three.js 不刷新）===== -->
+<script>
+(function() {
+  const CONTENT_SELECTOR = '.main';
+  const TITLE_SELECTOR = 'title';
+  let threejsInitialized = false;
+
+  // 1. 初始化 Pjax 拦截链接点击
+  function initPjax() {
+    document.addEventListener('click', function(e) {
+      const link = e.target.closest('a');
+      if (!link || 
+          link.target === '_blank' || 
+          link.hasAttribute('download') || 
+          link.protocol !== window.location.protocol || 
+          link.hostname !== window.location.hostname || 
+          (link.hash && link.pathname === window.location.pathname)) {
+        return;
+      }
+      e.preventDefault();
+      loadPage(link.href);
+    });
+
+    window.addEventListener('popstate', function(e) {
+      if (e.state && e.state.url) {
+        loadPage(e.state.url, false);
+      }
+    });
+  }
+
+  // 2. 异步加载页面并局部更新内容
+  function loadPage(url, addToHistory = true) {
+    fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error('页面加载失败');
+        return response.text();
+      })
+      .then(html => {
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, 'text/html');
+        const newContent = newDoc.querySelector(CONTENT_SELECTOR);
+        const newTitle = newDoc.querySelector(TITLE_SELECTOR)?.textContent;
+
+        if (!newContent) throw new Error('未找到内容区域');
+
+        document.querySelector(CONTENT_SELECTOR).replaceWith(newContent);
+        document.title = newTitle || document.title;
+
+        if (addToHistory) {
+          history.pushState({ url: url }, newTitle, url);
+        }
+
+        initNewContentScripts(); // 调用脚本初始化（含导航更新）
+      })
+      .catch(err => {
+        console.error('Pjax 加载失败，降级为默认跳转：', err);
+        window.location.href = url;
+      });
+  }
+
+  // 3. 初始化新内容中的脚本
+  function initNewContentScripts() {
+    // 重新执行新内容中的脚本
+    const scripts = document.querySelectorAll(CONTENT_SELECTOR + ' script');
+    scripts.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      newScript.textContent = oldScript.textContent;
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+
+    // ===== 新增：Pjax 加载完成后更新导航栏活跃状态 =====
+    updateActiveNav();
+  }
+
+  // 4. 新增：导航栏活跃状态更新函数
+  function updateActiveNav() {
+    const currentPath = window.location.pathname;
+    const navSpans = document.querySelectorAll('#menu li a span');
+    
+    // 清除所有 active 类
+    navSpans.forEach(span => {
+      span.classList.remove('active');
+    });
+
+    navSpans.forEach(span => {
+      const link = span.closest('a');
+      let linkPath = link.getAttribute('href');
+
+      // 提取相对路径
+      try {
+        const url = new URL(linkPath);
+        linkPath = url.pathname;
+      } catch (e) {
+        linkPath = linkPath;
+      }
+
+      // 关键修复：首页仅在当前路径为 "/" 时激活
+      if (linkPath === '/') {
+        if (currentPath === '/') {
+          span.classList.add('active');
+        }
+      } 
+      // 其他页面正常匹配
+      else if (currentPath.startsWith(linkPath)) {
+        span.classList.add('active');
+      }
+    });
+  }
+  // 5. 确保 Three.js 只初始化一次
+  function initThreejsOnce() {
+    if (!threejsInitialized) {
+      initThreejsBackground();
+      threejsInitialized = true;
+    }
+  }
+
+  // 页面加载完成后初始化
+  window.addEventListener('DOMContentLoaded', function() {
+    initPjax();
+    initThreejsOnce();
+    // 新增：首次加载时也更新一次导航状态
+    updateActiveNav();
+  });
+})();
+</script>
+
+
+
+
+<!-- ================================================== -->
+
+<!-- 原自定义 CSS 样式（保持不变，可补充层级设置） -->
+<style>
+/* 确保 Three.js 背景不被覆盖 */
+#threejs-container {
+  z-index: -1 !important;
+}
+
+/* 移除默认背景 */
+body {
+  background: transparent !important;
+}
+
+.main {
+  background: transparent !important;
+  position: relative; /* 新增：确保正文在背景上方 */
+  z-index: 1;         /* 新增：层级高于背景 */
+}
+</style>
+
+
