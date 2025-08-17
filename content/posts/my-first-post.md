@@ -121,23 +121,5 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
-
-![](https://i.postimg.cc/Bbz12JKZ/image.png)
-
-或许也可以让 chatgpt 的访问更加丝滑。
-
-起因是在看 react 的官方教程时，发现有一张图片无法访问，对，就是下面这张，
-
-![](https://i.imgur.com/yXOvdOSs.jpg)
-
-其实我最近两年的 imgur 的访问一直比较有问题，有时候需要换很多个节点才能尝试出来一个可以正常加载 imgur 图片的 ip，而有时候甚至会全军覆没。
-
-今天实在忍不了了，所以，就在网上找了一下有没有好的方法可以实现 imgur 的图片的正常访问，因为这个图床(图片托管网站)用到的地方挺多的，比如，像上面的 reactjs 的官网都会用到，还有 v 站也是默认会渲染 imgur 的图片，我自己的博客之前也是用 imgur 比较多，现在则换成了访问更加顺畅的 postimage，不过，我还有很多图片没有迁移过去，所以，解决 imgur 这个图床的问题迫在眉睫。找了一圈，发现还是用 warp 套一层比较合适。
-
-那么，具体是怎么操作呢？
-
-经过我的尝试，发现使用第三方开源的 [cli](https://github.com/ViRb3/wgcf) 而非是 cloudflare 的官方 cli 在 Arch 上的体验是更加丝滑的，具体可以参考 Reddit 的这个帖子，
-
-<https://www.reddit.com/r/CloudFlare/comments/q0hqj4/warpcli_is_not_working/>
-
-具体来讲，就是先安装几个依赖，
+---
+测试使用
