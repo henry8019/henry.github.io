@@ -261,34 +261,53 @@
   // 4. 新增：导航栏活跃状态更新函数
   function updateActiveNav() {
     const currentPath = window.location.pathname;
+    // 标准化当前路径：确保以斜杠开头和结尾（统一格式）
+    const normalizedCurrentPath = 
+      '/' + currentPath.replace(/^\/+|\/+$/g, '') + '/'; 
+    console.log('当前页面标准化路径：', normalizedCurrentPath);
+
     const navSpans = document.querySelectorAll('#menu li a span');
     
-    // 清除所有 active 类
+    // 清除所有 active 类（强制重置）
     navSpans.forEach(span => {
       span.classList.remove('active');
+      console.log('已移除 active 类：', span.textContent);
     });
 
     navSpans.forEach(span => {
       const link = span.closest('a');
       let linkPath = link.getAttribute('href');
 
-      // 提取相对路径
+      // 1. 提取相对路径（处理完整URL或相对路径）
       try {
         const url = new URL(linkPath);
-        linkPath = url.pathname;
+        linkPath = url.pathname; // 从完整URL中提取路径（如 "http://xxx/index/" → "/index/"）
       } catch (e) {
-        linkPath = linkPath;
+        linkPath = linkPath; // 直接使用相对路径（如 "index/"）
       }
 
-      // 关键修复：首页仅在当前路径为 "/" 时激活
-      if (linkPath === '/') {
-        if (currentPath === '/') {
+      // 2. 标准化导航路径：强制以斜杠开头和结尾（与当前路径格式统一）
+      const normalizedLinkPath = 
+        '/' + linkPath.replace(/^\/+|\/+$/g, '') + '/'; 
+      console.log(`导航项「${span.textContent}」标准化路径：`, normalizedLinkPath);
+
+      // 3. 精准匹配逻辑
+      if (normalizedLinkPath === '/index/') {
+        // 首页：仅当当前路径完全匹配 /index/ 时激活
+        if (normalizedCurrentPath === '/index/') {
           span.classList.add('active');
+          console.log('首页已激活（路径完全匹配）');
+        } else {
+          console.log('首页未激活（当前路径不匹配）');
         }
-      } 
-      // 其他页面正常匹配
-      else if (currentPath.startsWith(linkPath)) {
-        span.classList.add('active');
+      } else {
+        // 其他页面：当前路径以导航项路径开头时激活
+        if (normalizedCurrentPath.startsWith(normalizedLinkPath)) {
+          span.classList.add('active');
+          console.log(`「${span.textContent}」已激活（路径匹配）`);
+        } else {
+          console.log(`「${span.textContent}」未激活（路径不匹配）`);
+        }
       }
     });
   }
