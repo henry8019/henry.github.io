@@ -90,7 +90,7 @@ params:
       url: "https://x.com/"
     - name: Bilibili
       title: Follow my bilibili
-      url: "https://space.bilibili.com/3493138859559908"
+      url: "https://bilibili.com/"
 
 
   # 搜索
