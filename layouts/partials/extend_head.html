@@ -58,7 +58,7 @@
       container.appendChild(renderer.domElement);
 
       // 创建粒子系统（主题适配核心元素）
-      const particlesCount = 1500;
+      const particlesCount = 200;
       const particlesGeometry = new THREE.BufferGeometry();
       const posArray = new Float32Array(particlesCount * 3);
       // 粒子分布优化：中心密集，边缘稀疏
@@ -76,9 +76,6 @@
        // 基础大小与衰减
         size: 0.03, // 稍大一点，提升可见性
         sizeAttenuation: true, // 远处粒子自动缩小，增强空间感
-        sizeMin: 0.01, // 限制最小尺寸，避免远处粒子消失
-        sizeMax: 0.08, // 限制最大尺寸，防止近处粒子过大
-
         // 颜色与透明度（支持主题切换）
         color: 0x007acc, // 浅色模式默认：深蓝色
         transparent: true,
