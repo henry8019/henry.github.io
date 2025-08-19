@@ -1,6 +1,6 @@
 ---
 date: '2025-08-18T22:31:12+08:00'
-draft: true
+draft: false
 title: 'Cursor使用体会'
 tags: ["AI", "心得体会"]
 categories: ["AI技术"]
